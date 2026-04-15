@@ -1,0 +1,220 @@
+{% extends "storefront/base.html" %}
+{% load static %}
+
+{% block title %}{{ product.name }} — RetailDash Store{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+  <!-- Breadcrumb -->
+  <nav class="text-sm text-gray-500 mb-6 flex items-center gap-2">
+    <a href="{% url 'storefront:home' %}" class="hover:text-indigo-600">Home</a>
+    <span>/</span>
+    <a href="{% url 'storefront:catalog' %}" class="hover:text-indigo-600">Products</a>
+    {% if product.category %}
+      <span>/</span>
+      <a href="{% url 'storefront:category' product.category.slug %}" class="hover:text-indigo-600">{{ product.category.name }}</a>
+    {% endif %}
+    <span>/</span>
+    <span class="text-gray-800 font-medium">{{ product.name }}</span>
+  </nav>
+
+  <!-- Product Info -->
+  <div class="flex flex-col lg:flex-row gap-10 mb-14">
+
+    <!-- Image -->
+    <div class="lg:w-1/2">
+      <div class="bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl overflow-hidden h-96 flex items-center justify-center">
+        {% with product.images.first as img %}
+          {% if img %}
+            <img src="{{ img.image.url }}" alt="{{ img.alt_text|default:product.name }}" class="h-full w-full object-cover"/>
+          {% else %}
+            <svg class="w-24 h-24 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+          {% endif %}
+        {% endwith %}
+      </div>
+
+      <!-- Extra images -->
+      {% if product.images.count > 1 %}
+      <div class="flex gap-3 mt-3 overflow-x-auto">
+        {% for img in product.images.all %}
+          <div class="w-20 h-20 flex-shrink-0 rounded-xl overflow-hidden border-2 border-gray-200 cursor-pointer">
+            <img src="{{ img.image.url }}" alt="{{ img.alt_text }}" class="h-full w-full object-cover"/>
+          </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Details -->
+    <div class="lg:w-1/2">
+      {% if product.category %}
+        <span class="text-sm font-medium text-indigo-600 uppercase tracking-wide">{{ product.category.name }}</span>
+      {% endif %}
+      <h1 class="text-3xl font-bold text-gray-900 mt-1 mb-2">{{ product.name }}</h1>
+
+      <!-- Rating summary -->
+      {% if reviews %}
+        <div class="flex items-center gap-2 mb-4">
+          <div class="flex text-yellow-400">
+            {% with reviews|length as count %}
+              {% for r in reviews %}{% endfor %}
+            {% endwith %}
+            &#9733;&#9733;&#9733;&#9733;&#9733;
+          </div>
+          <span class="text-sm text-gray-500">({{ reviews.count }} review{{ reviews.count|pluralize }})</span>
+        </div>
+      {% endif %}
+
+      <div class="text-3xl font-extrabold text-indigo-600 mb-4">${{ product.price }}</div>
+
+      <!-- Stock badge -->
+      {% if product.stock_quantity > 0 %}
+        <span class="inline-flex items-center gap-1 text-sm bg-green-50 text-green-700 px-3 py-1 rounded-full font-medium mb-4">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+          In Stock ({{ product.stock_quantity }} available)
+        </span>
+      {% else %}
+        <span class="inline-flex items-center gap-1 text-sm bg-red-50 text-red-700 px-3 py-1 rounded-full font-medium mb-4">
+          Out of Stock
+        </span>
+      {% endif %}
+
+      {% if product.description %}
+        <p class="text-gray-600 text-sm leading-relaxed mb-6">{{ product.description }}</p>
+      {% endif %}
+
+      <!-- Add to cart -->
+      {% if product.stock_quantity > 0 %}
+      <form method="post" action="{% url 'storefront:cart_add' product.pk %}"
+            hx-post="{% url 'storefront:cart_add' product.pk %}"
+            hx-target="#cart-count-badge"
+            hx-swap="outerHTML">
+        {% csrf_token %}
+        <div class="flex items-center gap-4">
+          <div class="flex items-center border border-gray-300 rounded-xl overflow-hidden">
+            <button type="button" onclick="let i=document.getElementById('qty');if(i.value>1)i.value--" class="px-3 py-2 text-gray-600 hover:bg-gray-100">-</button>
+            <input id="qty" type="number" name="quantity" value="1" min="1" max="{{ product.stock_quantity }}"
+                   class="w-14 text-center py-2 border-0 focus:ring-0 text-sm font-medium"/>
+            <button type="button" onclick="let i=document.getElementById('qty');i.value=Math.min(parseInt(i.value)+1,{{ product.stock_quantity }})" class="px-3 py-2 text-gray-600 hover:bg-gray-100">+</button>
+          </div>
+          <button type="submit" class="flex-1 bg-indigo-600 text-white py-3 px-6 rounded-xl font-bold hover:bg-indigo-700 transition text-base">
+            Add to Cart
+          </button>
+        </div>
+      </form>
+      {% endif %}
+
+      <div class="mt-4 text-sm text-gray-500">SKU: {{ product.sku }}</div>
+    </div>
+  </div>
+
+  <!-- Reviews Section -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 mb-14">
+    <!-- Existing Reviews -->
+    <div>
+      <h2 class="text-xl font-bold text-gray-900 mb-4">Customer Reviews</h2>
+      {% if reviews %}
+        <div class="space-y-4">
+          {% for review in reviews %}
+          <div class="bg-gray-50 rounded-xl p-4">
+            <div class="flex items-center justify-between mb-2">
+              <span class="font-semibold text-gray-800 text-sm">{{ review.customer.user.get_full_name|default:review.customer.user.username }}</span>
+              <div class="flex text-yellow-400 text-sm">
+                {% for i in "12345" %}
+                  {% if forloop.counter <= review.rating %}★{% else %}☆{% endif %}
+                {% endfor %}
+              </div>
+            </div>
+            {% if review.comment %}
+              <p class="text-gray-600 text-sm">{{ review.comment }}</p>
+            {% endif %}
+            <p class="text-xs text-gray-400 mt-2">{{ review.created_at|date:"N j, Y" }}</p>
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="text-gray-500 text-sm">No reviews yet. Be the first to review this product!</p>
+      {% endif %}
+    </div>
+
+    <!-- Submit Review Form -->
+    <div>
+      <h2 class="text-xl font-bold text-gray-900 mb-4">
+        {% if user_review %}Update Your Review{% else %}Write a Review{% endif %}
+      </h2>
+      {% if user.is_authenticated and user.customer %}
+        <div id="review-result">
+          <form method="post" action="{% url 'storefront:submit_review' product.pk %}"
+                hx-post="{% url 'storefront:submit_review' product.pk %}"
+                hx-target="#review-result"
+                hx-swap="innerHTML">
+            {% csrf_token %}
+            <div class="mb-4">
+              <label class="block text-sm font-medium text-gray-700 mb-1">Rating</label>
+              <select name="rating" required class="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500">
+                <option value="">Select rating</option>
+                <option value="5" {% if user_review.rating == 5 %}selected{% endif %}>5 - Excellent</option>
+                <option value="4" {% if user_review.rating == 4 %}selected{% endif %}>4 - Good</option>
+                <option value="3" {% if user_review.rating == 3 %}selected{% endif %}>3 - Average</option>
+                <option value="2" {% if user_review.rating == 2 %}selected{% endif %}>2 - Poor</option>
+                <option value="1" {% if user_review.rating == 1 %}selected{% endif %}>1 - Terrible</option>
+              </select>
+            </div>
+            <div class="mb-4">
+              <label class="block text-sm font-medium text-gray-700 mb-1">Comment (optional)</label>
+              <textarea name="comment" rows="4"
+                        class="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500">{% if user_review %}{{ user_review.comment }}{% endif %}</textarea>
+            </div>
+            <button type="submit" class="w-full bg-indigo-600 text-white py-2 rounded-xl font-semibold hover:bg-indigo-700 transition">
+              {% if user_review %}Update Review{% else %}Submit Review{% endif %}
+            </button>
+          </form>
+        </div>
+      {% elif user.is_authenticated %}
+        <p class="text-gray-500 text-sm">Reviews are available to customer accounts only.</p>
+      {% else %}
+        <p class="text-gray-500 text-sm">
+          <a href="{% url 'customers:login' %}?next={{ request.path }}" class="text-indigo-600 hover:underline">Login</a> to write a review.
+        </p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Related Products -->
+  {% if related_products %}
+  <div>
+    <h2 class="text-xl font-bold text-gray-900 mb-6">Related Products</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5">
+      {% for rp in related_products %}
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition group">
+        <a href="{% url 'storefront:product_detail' rp.slug %}">
+          <div class="h-40 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center overflow-hidden">
+            {% with rp.images.first as img %}
+              {% if img %}
+                <img src="{{ img.image.url }}" alt="{{ rp.name }}" class="h-full w-full object-cover group-hover:scale-105 transition"/>
+              {% else %}
+                <svg class="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+              {% endif %}
+            {% endwith %}
+          </div>
+        </a>
+        <div class="p-3">
+          <h3 class="text-sm font-semibold text-gray-900 line-clamp-2">{{ rp.name }}</h3>
+          <div class="mt-2 flex items-center justify-between">
+            <span class="font-bold text-gray-900 text-sm">${{ rp.price }}</span>
+            <a href="{% url 'storefront:product_detail' rp.slug %}" class="text-xs text-indigo-600 hover:underline">View</a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

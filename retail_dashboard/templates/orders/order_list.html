@@ -77,6 +77,9 @@
                         <a href="{% url 'orders:order_detail' order.pk %}" class="text-sm font-medium text-blue-600 hover:text-blue-700">
                             {{ order.order_number }}
                         </a>
+                        {% if order.source == 'storefront' %}
+                        <span class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-violet-100 text-violet-700">Storefront</span>
+                        {% endif %}
                     </td>
                     <td class="px-4 py-3">
                         <p class="text-sm font-medium text-gray-900">{{ order.customer_name }}</p>

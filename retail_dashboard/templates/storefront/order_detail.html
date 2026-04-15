@@ -1,0 +1,111 @@
+{% extends "storefront/base.html" %}
+{% load static %}
+
+{% block title %}Order {{ order.order_number }} — RetailDash Store{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+  <div class="flex items-center gap-3 mb-6">
+    <a href="{% url 'customers:order_history' %}" class="text-gray-400 hover:text-indigo-600">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+      </svg>
+    </a>
+    <h1 class="text-2xl font-bold text-gray-900">Order {{ order.order_number }}</h1>
+    <span class="px-3 py-1 rounded-full text-sm font-semibold capitalize
+      {% if order.status == 'delivered' %}bg-green-100 text-green-700
+      {% elif order.status == 'cancelled' %}bg-red-100 text-red-700
+      {% elif order.status == 'shipped' %}bg-purple-100 text-purple-700
+      {% else %}bg-indigo-100 text-indigo-700{% endif %}">
+      {{ order.status }}
+    </span>
+  </div>
+
+  <!-- Status Timeline -->
+  <div class="bg-white border border-gray-100 rounded-2xl shadow-sm p-6 mb-6">
+    <h2 class="font-bold text-gray-900 mb-4">Order Status</h2>
+    <div class="flex items-center gap-1 overflow-x-auto pb-2">
+      {% for step_name in "pending confirmed processing shipped delivered"|split:" " %}
+        {% if step_name == order.status %}
+          <div class="flex flex-col items-center flex-1 min-w-0">
+            <div class="w-9 h-9 rounded-full bg-indigo-600 flex items-center justify-center flex-shrink-0 shadow">
+              <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+              </svg>
+            </div>
+            <span class="text-xs text-indigo-600 font-bold mt-1 capitalize text-center">{{ step_name }}</span>
+          </div>
+        {% else %}
+          <div class="flex flex-col items-center flex-1 min-w-0">
+            <div class="w-9 h-9 rounded-full border-2 border-gray-200 bg-white flex-shrink-0"></div>
+            <span class="text-xs text-gray-400 mt-1 capitalize text-center">{{ step_name }}</span>
+          </div>
+        {% endif %}
+        {% if not forloop.last %}
+          <div class="h-0.5 flex-1 bg-gray-200 flex-shrink min-w-4"></div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Order Details -->
+  <div class="bg-white border border-gray-100 rounded-2xl shadow-sm p-6 mb-6">
+    <h2 class="font-bold text-gray-900 mb-4">Order Details</h2>
+    <div class="grid grid-cols-2 gap-4 text-sm">
+      <div>
+        <p class="text-gray-500">Customer</p>
+        <p class="font-medium text-gray-900">{{ order.customer_name }}</p>
+      </div>
+      <div>
+        <p class="text-gray-500">Email</p>
+        <p class="font-medium text-gray-900">{{ order.customer_email }}</p>
+      </div>
+      {% if order.customer_phone %}
+      <div>
+        <p class="text-gray-500">Phone</p>
+        <p class="font-medium text-gray-900">{{ order.customer_phone }}</p>
+      </div>
+      {% endif %}
+      <div>
+        <p class="text-gray-500">Date Placed</p>
+        <p class="font-medium text-gray-900">{{ order.created_at|date:"N j, Y g:i A" }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Line Items -->
+  <div class="bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
+    <h2 class="font-bold text-gray-900 mb-4">Items Ordered</h2>
+    <div class="space-y-3 mb-4">
+      {% for item in order.items.all %}
+      <div class="flex items-center gap-4">
+        <div class="w-14 h-14 flex-shrink-0 bg-gray-100 rounded-xl overflow-hidden flex items-center justify-center">
+          {% with item.product.images.first as img %}
+            {% if img %}
+              <img src="{{ img.image.url }}" alt="{{ item.product.name }}" class="w-full h-full object-cover"/>
+            {% else %}
+              <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
+            {% endif %}
+          {% endwith %}
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="font-semibold text-gray-900 text-sm truncate">{{ item.product.name }}</p>
+          <p class="text-gray-500 text-xs">${{ item.unit_price }} each</p>
+        </div>
+        <div class="text-right">
+          <p class="text-gray-500 text-xs">Qty: {{ item.quantity }}</p>
+          <p class="font-bold text-gray-900 text-sm">${{ item.line_total }}</p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="border-t border-gray-100 pt-4 flex justify-between font-bold text-gray-900">
+      <span>Total</span>
+      <span>${{ order.total_amount }}</span>
+    </div>
+  </div>
+</div>
+{% endblock %}

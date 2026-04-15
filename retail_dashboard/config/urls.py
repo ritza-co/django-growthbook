@@ -14,4 +14,6 @@ urlpatterns = [
     path('analytics/', include('apps.analytics.urls', namespace='analytics')),
     path('users/', include('apps.users.urls', namespace='users')),
     path('profile/', include('apps.accounts.profile_urls', namespace='profile')),
+    path('store/', include('apps.storefront.urls', namespace='storefront')),
+    path('store/', include('apps.customers.urls', namespace='customers')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -27,6 +27,8 @@ INSTALLED_APPS = [
     'apps.orders.apps.OrdersConfig',
     'apps.analytics.apps.AnalyticsConfig',
     'apps.users.apps.UsersConfig',
+    'apps.storefront.apps.StorefrontConfig',
+    'apps.customers.apps.CustomersConfig',
 ]
 
 MIDDLEWARE = [
@@ -52,6 +54,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'apps.storefront.context_processors.cart_count',
             ],
         },
     },

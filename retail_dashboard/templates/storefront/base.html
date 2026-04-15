@@ -1,0 +1,155 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}RetailDash Store{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/htmx.org@1.9.10" defer></script>
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+    }
+  </style>
+</head>
+<body class="bg-white min-h-screen flex flex-col">
+
+  <!-- Top Navbar -->
+  <header class="bg-white shadow-sm sticky top-0 z-50 border-b border-gray-100">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16 gap-4">
+
+        <!-- Logo -->
+        <a href="{% url 'storefront:home' %}" class="flex-shrink-0 text-xl font-bold text-indigo-600 whitespace-nowrap">
+          RetailDash Store
+        </a>
+
+        <!-- Search -->
+        <form action="{% url 'storefront:catalog' %}" method="get" class="flex-1 max-w-xl">
+          <div class="relative">
+            <input
+              type="text"
+              name="q"
+              placeholder="Search products..."
+              value="{{ request.GET.q }}"
+              class="w-full pl-4 pr-10 py-2 border border-gray-300 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            />
+            <button type="submit" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-indigo-600">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+              </svg>
+            </button>
+          </div>
+        </form>
+
+        <!-- Right actions -->
+        <div class="flex items-center gap-4">
+          <!-- Cart -->
+          <a href="{% url 'storefront:cart' %}" class="relative flex items-center text-gray-700 hover:text-indigo-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+            </svg>
+            <span id="cart-count-badge" class="absolute -top-2 -right-2 bg-indigo-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center{% if not cart_count %} hidden{% endif %}">
+              {{ cart_count }}
+            </span>
+          </a>
+
+          <!-- Auth links -->
+          {% if user.is_authenticated and user.customer %}
+            <div class="flex items-center gap-3">
+              <a href="{% url 'customers:account' %}" class="text-sm text-gray-700 hover:text-indigo-600 font-medium">
+                {{ user.first_name|default:user.username }}
+              </a>
+              <a href="{% url 'customers:order_history' %}" class="text-sm text-gray-500 hover:text-indigo-600">Orders</a>
+              <form method="post" action="{% url 'customers:logout' %}" class="inline">
+                {% csrf_token %}
+                <button type="submit" class="text-sm text-gray-500 hover:text-red-600">Logout</button>
+              </form>
+            </div>
+          {% else %}
+            <div class="flex items-center gap-3">
+              <a href="{% url 'customers:login' %}" class="text-sm text-gray-700 hover:text-indigo-600 font-medium">Login</a>
+              <a href="{% url 'customers:register' %}" class="text-sm bg-indigo-600 text-white px-4 py-2 rounded-full hover:bg-indigo-700 transition">Register</a>
+            </div>
+          {% endif %}
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Category nav -->
+    <div class="border-t border-gray-100 bg-gray-50">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <nav class="flex items-center gap-6 overflow-x-auto py-2 text-sm">
+          <a href="{% url 'storefront:catalog' %}" class="whitespace-nowrap text-gray-600 hover:text-indigo-600 font-medium">All Products</a>
+          {% for cat in categories %}
+            <a href="{% url 'storefront:category' cat.slug %}" class="whitespace-nowrap text-gray-600 hover:text-indigo-600">{{ cat.name }}</a>
+          {% endfor %}
+          <a href="{% url 'storefront:track_order' %}" class="whitespace-nowrap text-gray-600 hover:text-indigo-600">Track Order</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <!-- Messages -->
+  {% if messages %}
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 w-full">
+      {% for message in messages %}
+        <div class="mb-2 px-4 py-3 rounded-lg text-sm font-medium
+          {% if message.tags == 'error' %}bg-red-50 text-red-700 border border-red-200
+          {% elif message.tags == 'success' %}bg-green-50 text-green-700 border border-green-200
+          {% else %}bg-blue-50 text-blue-700 border border-blue-200{% endif %}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <!-- Main content -->
+  <main class="flex-1">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-gray-900 text-gray-300 mt-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div>
+          <h3 class="text-white font-bold text-lg mb-3">RetailDash Store</h3>
+          <p class="text-sm text-gray-400">Your one-stop shop for quality products at great prices.</p>
+        </div>
+        <div>
+          <h4 class="text-white font-semibold mb-3">Quick Links</h4>
+          <ul class="space-y-2 text-sm">
+            <li><a href="{% url 'storefront:home' %}" class="hover:text-white">Home</a></li>
+            <li><a href="{% url 'storefront:catalog' %}" class="hover:text-white">Products</a></li>
+            <li><a href="{% url 'storefront:track_order' %}" class="hover:text-white">Track Order</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-white font-semibold mb-3">Account</h4>
+          <ul class="space-y-2 text-sm">
+            {% if user.is_authenticated %}
+              <li><a href="{% url 'customers:account' %}" class="hover:text-white">My Account</a></li>
+              <li><a href="{% url 'customers:order_history' %}" class="hover:text-white">Order History</a></li>
+            {% else %}
+              <li><a href="{% url 'customers:login' %}" class="hover:text-white">Login</a></li>
+              <li><a href="{% url 'customers:register' %}" class="hover:text-white">Register</a></li>
+            {% endif %}
+          </ul>
+        </div>
+      </div>
+      <div class="border-t border-gray-800 mt-8 pt-6 text-sm text-center text-gray-500">
+        &copy; {% now "Y" %} RetailDash Store. All rights reserved.
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
