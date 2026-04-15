@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block title %}My Profile{% endblock %}
+{% block page_title %}My Profile{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <!-- Avatar & Role header -->
+        <div class="flex items-center gap-5 mb-6 pb-6 border-b border-gray-100">
+            <div class="w-16 h-16 rounded-full flex items-center justify-center text-white text-2xl font-bold
+                {% if profile.role == 'admin' %}bg-red-500
+                {% elif profile.role == 'manager' %}bg-blue-500
+                {% elif profile.role == 'analyst' %}bg-green-500
+                {% else %}bg-yellow-500{% endif %}">
+                {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+            </div>
+            <div>
+                <h2 class="text-lg font-bold text-gray-900">{{ user.get_full_name|default:user.username }}</h2>
+                <p class="text-sm text-gray-500">@{{ user.username }}</p>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-1
+                    {% if profile.role == 'admin' %}bg-red-100 text-red-800
+                    {% elif profile.role == 'manager' %}bg-blue-100 text-blue-800
+                    {% elif profile.role == 'analyst' %}bg-green-100 text-green-800
+                    {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                    {{ profile.get_role_display }}
+                </span>
+            </div>
+        </div>
+
+        <form method="post" enctype="multipart/form-data" class="space-y-5">
+            {% csrf_token %}
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                    <input type="text" name="first_name" value="{{ user.first_name }}"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                    <input type="text" name="last_name" value="{{ user.last_name }}"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input type="email" name="email" value="{{ user.email }}"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                    {{ form.phone }}
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Avatar</label>
+                {% if profile.avatar %}
+                <div class="mb-2">
+                    <img src="{{ profile.avatar.url }}" alt="Avatar" class="w-20 h-20 rounded-full object-cover">
+                </div>
+                {% endif %}
+                {{ form.avatar }}
+            </div>
+
+            <div class="pt-2">
+                <button type="submit"
+                        class="px-6 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
+                    Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
