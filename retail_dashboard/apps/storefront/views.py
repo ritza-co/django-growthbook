@@ -342,9 +342,15 @@ def checkout(request):
     })
 
 
+STATUS_STEPS = ['pending', 'confirmed', 'processing', 'shipped', 'delivered']
+
+
 def order_confirm(request, order_number):
     order = get_object_or_404(Order, order_number=order_number)
-    return render(request, 'storefront/order_confirm.html', {'order': order})
+    return render(request, 'storefront/order_confirm.html', {
+        'order': order,
+        'status_steps': STATUS_STEPS,
+    })
 
 
 def track_order(request):
@@ -359,7 +365,11 @@ def track_order(request):
                 error = f'No order found with number "{order_number}".'
         else:
             error = 'Please enter an order number.'
-    return render(request, 'storefront/track_order.html', {'order': order, 'error': error})
+    return render(request, 'storefront/track_order.html', {
+        'order': order,
+        'error': error,
+        'status_steps': STATUS_STEPS,
+    })
 
 
 @require_POST

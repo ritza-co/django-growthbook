@@ -17,6 +17,9 @@ def register(request):
             user.last_name = form.cleaned_data['last_name']
             user.email = form.cleaned_data['email']
             user.save()
+            # Remove the auto-created Profile (created by accounts signal) so
+            # this user is recognized as a customer, not internal staff.
+            user.profile.delete()
             Customer.objects.create(user=user)
             login(request, user)
             return redirect('storefront:home')
@@ -39,7 +42,7 @@ def login_view(request):
             user = authenticate(request, username=username, password=password)
             if user is not None:
                 # Block internal staff from logging in through customer portal
-                if hasattr(user, 'profile'):
+                if hasattr(user, 'profile') and not hasattr(user, 'customer'):
                     form.add_error(None, 'This account is not a customer account. Please use the internal login.')
                 else:
                     login(request, user)
@@ -99,4 +102,5 @@ def order_detail(request, order_number):
         return redirect('storefront:home')
 
     order = get_object_or_404(Order, order_number=order_number, customer_email=request.user.email)
-    return render(request, 'storefront/order_detail.html', {'order': order})
+    status_steps = ['pending', 'confirmed', 'processing', 'shipped', 'delivered']
+    return render(request, 'storefront/order_detail.html', {'order': order, 'status_steps': status_steps})
