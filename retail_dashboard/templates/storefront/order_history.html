@@ -1,0 +1,60 @@
+{% extends "storefront/base.html" %}
+{% load static %}
+
+{% block title %}Order History — RetailDash Store{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-bold text-gray-900">Order History</h1>
+    <a href="{% url 'customers:account' %}" class="text-sm text-indigo-600 hover:underline">My Account</a>
+  </div>
+
+  {% if orders %}
+    <div class="space-y-4">
+      {% for order in orders %}
+      <div class="bg-white border border-gray-100 rounded-2xl shadow-sm p-5">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <p class="text-sm text-gray-500 mb-0.5">Order Number</p>
+            <p class="font-bold text-indigo-700 text-lg">{{ order.order_number }}</p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-500 mb-0.5">Date</p>
+            <p class="font-medium text-gray-900 text-sm">{{ order.created_at|date:"N j, Y" }}</p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-500 mb-0.5">Status</p>
+            <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold capitalize
+              {% if order.status == 'delivered' %}bg-green-100 text-green-700
+              {% elif order.status == 'cancelled' %}bg-red-100 text-red-700
+              {% elif order.status == 'shipped' %}bg-purple-100 text-purple-700
+              {% else %}bg-indigo-100 text-indigo-700{% endif %}">
+              {{ order.status }}
+            </span>
+          </div>
+          <div>
+            <p class="text-sm text-gray-500 mb-0.5">Total</p>
+            <p class="font-bold text-gray-900">${{ order.total_amount }}</p>
+          </div>
+          <a href="{% url 'customers:order_detail' order.order_number %}"
+             class="inline-block text-sm bg-indigo-50 text-indigo-700 px-4 py-2 rounded-lg font-medium hover:bg-indigo-100 transition whitespace-nowrap">
+            View Details
+          </a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="text-center py-20 text-gray-400">
+      <svg class="w-16 h-16 mx-auto mb-4 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+      </svg>
+      <p class="text-lg font-medium text-gray-600">No orders yet.</p>
+      <a href="{% url 'storefront:catalog' %}" class="mt-4 inline-block bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-indigo-700 transition">
+        Start Shopping
+      </a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

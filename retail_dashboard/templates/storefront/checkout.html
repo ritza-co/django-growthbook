@@ -1,0 +1,96 @@
+{% extends "storefront/base.html" %}
+{% load static %}
+
+{% block title %}Checkout — RetailDash Store{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+  <h1 class="text-2xl font-bold text-gray-900 mb-8">Checkout</h1>
+
+  <form method="post" action="{% url 'storefront:checkout' %}">
+    {% csrf_token %}
+    <div class="flex flex-col lg:flex-row gap-8">
+
+      <!-- Customer Details -->
+      <div class="flex-1">
+        <div class="bg-white border border-gray-100 rounded-2xl shadow-sm p-6 mb-6">
+          <h2 class="font-bold text-gray-900 text-lg mb-4">Contact Information</h2>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+              <input type="text" name="first_name" value="{{ customer.user.first_name }}" required
+                     class="w-full px-4 py-2 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500"/>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+              <input type="text" name="last_name" value="{{ customer.user.last_name }}" required
+                     class="w-full px-4 py-2 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500"/>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <input type="email" name="email" value="{{ customer.user.email }}" required
+                   class="w-full px-4 py-2 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500"/>
+          </div>
+
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+            <input type="text" name="phone" value="{{ customer.phone }}"
+                   class="w-full px-4 py-2 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500"
+                   placeholder="Optional"/>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Delivery Address</label>
+            <textarea name="address" rows="3"
+                      class="w-full px-4 py-2 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500"
+                      placeholder="Your delivery address">{{ customer.address }}</textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Order Summary -->
+      <div class="lg:w-80 flex-shrink-0">
+        <div class="bg-white border border-gray-100 rounded-2xl shadow-sm p-6 sticky top-24">
+          <h2 class="font-bold text-gray-900 text-lg mb-4">Order Summary</h2>
+
+          <div class="space-y-3 mb-4">
+            {% for item in cart_items %}
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-600 line-clamp-1">{{ item.product.name }} <span class="text-gray-400">x{{ item.quantity }}</span></span>
+              <span class="font-medium text-gray-900 ml-2 whitespace-nowrap">${{ item.line_total }}</span>
+            </div>
+            {% endfor %}
+          </div>
+
+          <div class="border-t border-gray-100 pt-3 space-y-2 mb-4">
+            <div class="flex justify-between text-sm text-gray-600">
+              <span>Subtotal</span>
+              <span>${{ subtotal }}</span>
+            </div>
+            <div class="flex justify-between text-sm text-gray-600">
+              <span>Shipping</span>
+              <span class="text-green-600 font-medium">Free</span>
+            </div>
+          </div>
+
+          <div class="border-t border-gray-100 pt-3 flex justify-between font-bold text-gray-900 text-base mb-5">
+            <span>Total</span>
+            <span>${{ subtotal }}</span>
+          </div>
+
+          <button type="submit" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 transition text-base">
+            Place Order
+          </button>
+          <a href="{% url 'storefront:cart' %}" class="block text-center mt-3 text-sm text-gray-500 hover:text-indigo-600">
+            Back to Cart
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </form>
+</div>
+{% endblock %}

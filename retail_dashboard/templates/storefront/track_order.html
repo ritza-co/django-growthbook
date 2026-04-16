@@ -1,0 +1,97 @@
+{% extends "storefront/base.html" %}
+{% load static %}
+
+{% block title %}Track Your Order — RetailDash Store{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+  <div class="text-center mb-8">
+    <h1 class="text-3xl font-extrabold text-gray-900 mb-2">Track Your Order</h1>
+    <p class="text-gray-500">Enter your order number to see the current status.</p>
+  </div>
+
+  <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
+    <form method="post" action="{% url 'storefront:track_order' %}">
+      {% csrf_token %}
+      <div class="flex gap-3">
+        <input type="text" name="order_number" placeholder="e.g. ORD-00001"
+               value="{% if order %}{{ order.order_number }}{% endif %}"
+               required
+               class="flex-1 px-4 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"/>
+        <button type="submit" class="bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-indigo-700 transition whitespace-nowrap">
+          Track
+        </button>
+      </div>
+    </form>
+
+    {% if error %}
+      <div class="mt-4 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm font-medium">
+        {{ error }}
+      </div>
+    {% endif %}
+
+    {% if order %}
+      <div class="mt-6 border-t border-gray-100 pt-6">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">Order Number</p>
+            <p class="font-bold text-indigo-700 text-xl">{{ order.order_number }}</p>
+          </div>
+          <span class="px-3 py-1 rounded-full text-sm font-semibold capitalize
+            {% if order.status == 'delivered' %}bg-green-100 text-green-700
+            {% elif order.status == 'cancelled' %}bg-red-100 text-red-700
+            {% elif order.status == 'shipped' %}bg-purple-100 text-purple-700
+            {% else %}bg-indigo-100 text-indigo-700{% endif %}">
+            {{ order.status }}
+          </span>
+        </div>
+
+        <!-- Status Timeline -->
+        {% if order.status != 'cancelled' %}
+        <div class="flex items-center gap-1 overflow-x-auto pb-2 mb-6">
+          {% for step in status_steps %}
+            {% if step == order.status %}
+              <div class="flex flex-col items-center flex-1 min-w-0">
+                <div class="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center flex-shrink-0">
+                  <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                  </svg>
+                </div>
+                <span class="text-xs text-indigo-600 font-bold mt-1 capitalize text-center">{{ step }}</span>
+              </div>
+            {% else %}
+              <div class="flex flex-col items-center flex-1 min-w-0">
+                <div class="w-8 h-8 rounded-full border-2 border-gray-200 bg-white flex-shrink-0"></div>
+                <span class="text-xs text-gray-400 mt-1 capitalize text-center">{{ step }}</span>
+              </div>
+            {% endif %}
+            {% if not forloop.last %}
+              <div class="h-0.5 flex-1 bg-gray-200 flex-shrink min-w-4"></div>
+            {% endif %}
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="grid grid-cols-2 gap-4 text-sm">
+          <div>
+            <p class="text-gray-500">Customer</p>
+            <p class="font-medium text-gray-900">{{ order.customer_name }}</p>
+          </div>
+          <div>
+            <p class="text-gray-500">Date Placed</p>
+            <p class="font-medium text-gray-900">{{ order.created_at|date:"N j, Y" }}</p>
+          </div>
+          <div>
+            <p class="text-gray-500">Total</p>
+            <p class="font-bold text-gray-900">${{ order.total_amount }}</p>
+          </div>
+          <div>
+            <p class="text-gray-500">Items</p>
+            <p class="font-medium text-gray-900">{{ order.items.count }}</p>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

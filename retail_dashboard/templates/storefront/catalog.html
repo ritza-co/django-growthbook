@@ -1,0 +1,164 @@
+{% extends "storefront/base.html" %}
+{% load static %}
+
+{% block title %}Products — RetailDash Store{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="flex flex-col lg:flex-row gap-8">
+
+    <!-- Sidebar Filters -->
+    <aside class="lg:w-64 flex-shrink-0">
+      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sticky top-24">
+        <h2 class="font-bold text-gray-900 text-lg mb-4">Filters</h2>
+        <form method="get" action="{% url 'storefront:catalog' %}">
+
+          <!-- Categories -->
+          <div class="mb-5">
+            <h3 class="text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wide">Category</h3>
+            <ul class="space-y-1">
+              <li>
+                <a href="{% url 'storefront:catalog' %}"
+                   class="block text-sm px-2 py-1 rounded-lg {% if not category_slug %}bg-indigo-50 text-indigo-700 font-medium{% else %}text-gray-600 hover:text-indigo-600{% endif %}">
+                  All Products
+                </a>
+              </li>
+              {% for cat in categories %}
+              <li>
+                <a href="{% url 'storefront:catalog' %}?category={{ cat.slug }}"
+                   class="block text-sm px-2 py-1 rounded-lg {% if category_slug == cat.slug %}bg-indigo-50 text-indigo-700 font-medium{% else %}text-gray-600 hover:text-indigo-600{% endif %}">
+                  {{ cat.name }}
+                </a>
+              </li>
+              {% endfor %}
+            </ul>
+          </div>
+
+          {% if category_slug %}<input type="hidden" name="category" value="{{ category_slug }}"/>{% endif %}
+
+          <!-- Price Range -->
+          <div class="mb-5">
+            <h3 class="text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wide">Price Range</h3>
+            <div class="flex gap-2">
+              <input type="number" name="price_min" placeholder="Min" value="{{ price_min }}"
+                     class="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"/>
+              <input type="number" name="price_max" placeholder="Max" value="{{ price_max }}"
+                     class="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"/>
+            </div>
+          </div>
+
+          <!-- In Stock -->
+          <div class="mb-5">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" name="in_stock" value="1" {% if in_stock %}checked{% endif %}
+                     class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"/>
+              <span class="text-sm text-gray-700">In Stock Only</span>
+            </label>
+          </div>
+
+          <!-- Sort -->
+          <div class="mb-5">
+            <h3 class="text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wide">Sort By</h3>
+            <select name="sort" class="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
+              <option value="-created_at" {% if sort == '-created_at' %}selected{% endif %}>Newest</option>
+              <option value="price" {% if sort == 'price' %}selected{% endif %}>Price: Low to High</option>
+              <option value="-price" {% if sort == '-price' %}selected{% endif %}>Price: High to Low</option>
+              <option value="name" {% if sort == 'name' %}selected{% endif %}>Name A-Z</option>
+              <option value="-name" {% if sort == '-name' %}selected{% endif %}>Name Z-A</option>
+            </select>
+          </div>
+
+          <button type="submit" class="w-full bg-indigo-600 text-white py-2 rounded-lg text-sm font-semibold hover:bg-indigo-700 transition">
+            Apply Filters
+          </button>
+          <a href="{% url 'storefront:catalog' %}" class="block text-center mt-2 text-sm text-gray-500 hover:text-gray-700">Clear all</a>
+        </form>
+      </div>
+    </aside>
+
+    <!-- Product Grid -->
+    <div class="flex-1">
+      <div class="flex items-center justify-between mb-4">
+        <h1 class="text-xl font-bold text-gray-900">
+          {% if selected_category %}{{ selected_category.name }}{% else %}All Products{% endif %}
+          <span class="text-sm font-normal text-gray-500 ml-1">({{ page_obj.paginator.count }} items)</span>
+        </h1>
+      </div>
+
+      {% if page_obj.object_list %}
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5">
+          {% for product in page_obj %}
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition group">
+            <a href="{% url 'storefront:product_detail' product.slug %}">
+              <div class="h-44 bg-gray-100 overflow-hidden">
+                {% with product.images.first as img %}
+                  {% if img %}
+                    <img src="{{ img.image.url }}" alt="{{ img.alt_text|default:product.name }}" class="h-full w-full object-cover group-hover:scale-105 transition duration-300"/>
+                  {% else %}
+                    <img src="https://picsum.photos/seed/{{ product.slug }}/400/300" alt="{{ product.name }}" class="h-full w-full object-cover group-hover:scale-105 transition duration-300"/>
+                  {% endif %}
+                {% endwith %}
+              </div>
+            </a>
+            <div class="p-4">
+              {% if product.category %}
+                <span class="text-xs text-indigo-600 font-medium">{{ product.category.name }}</span>
+              {% endif %}
+              <h3 class="mt-1 text-sm font-semibold text-gray-900 line-clamp-2">
+                <a href="{% url 'storefront:product_detail' product.slug %}" class="hover:text-indigo-600">{{ product.name }}</a>
+              </h3>
+              <div class="mt-3 flex items-center justify-between">
+                <span class="font-bold text-gray-900">${{ product.price }}</span>
+                {% if product.stock_quantity > 0 %}
+                  <form method="post" action="{% url 'storefront:cart_add' product.pk %}"
+                        hx-post="{% url 'storefront:cart_add' product.pk %}"
+                        hx-target="#cart-count-badge"
+                        hx-swap="outerHTML">
+                    {% csrf_token %}
+                    <input type="hidden" name="quantity" value="1"/>
+                    <button type="submit" class="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 transition">
+                      Add to Cart
+                    </button>
+                  </form>
+                {% else %}
+                  <span class="text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full font-medium">Out of Stock</span>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <div class="mt-8 flex items-center justify-center gap-2">
+          {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}&sort={{ sort }}&category={{ category_slug }}&price_min={{ price_min }}&price_max={{ price_max }}&in_stock={{ in_stock }}"
+               class="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:border-indigo-500 hover:text-indigo-600">
+              &larr; Previous
+            </a>
+          {% endif %}
+          <span class="text-sm text-gray-600">
+            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+          </span>
+          {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}&sort={{ sort }}&category={{ category_slug }}&price_min={{ price_min }}&price_max={{ price_max }}&in_stock={{ in_stock }}"
+               class="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:border-indigo-500 hover:text-indigo-600">
+              Next &rarr;
+            </a>
+          {% endif %}
+        </div>
+        {% endif %}
+      {% else %}
+        <div class="text-center py-20 text-gray-400">
+          <svg class="w-16 h-16 mx-auto mb-4 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+          </svg>
+          <p class="text-lg font-medium">No products found.</p>
+          <a href="{% url 'storefront:catalog' %}" class="mt-3 inline-block text-indigo-600 hover:underline text-sm">Clear filters</a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
