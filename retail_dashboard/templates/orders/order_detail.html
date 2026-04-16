@@ -164,7 +164,7 @@
                 </div>
                 <div>
                     <dt class="text-xs text-gray-500">Created By</dt>
-                    <dd class="text-sm text-gray-700">{{ order.created_by.get_full_name|default:order.created_by.username|default:"—" }}</dd>
+                    <dd class="text-sm text-gray-700">{% if order.created_by %}{{ order.created_by.get_full_name|default:order.created_by.username }}{% else %}—{% endif %}</dd>
                 </div>
                 <div>
                     <dt class="text-xs text-gray-500">Last Updated</dt>
