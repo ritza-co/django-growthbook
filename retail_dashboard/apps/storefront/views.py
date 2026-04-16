@@ -315,16 +315,14 @@ def checkout(request):
             created_by=storefront_user,
         )
 
-        # Create order items and decrement stock
+        # Create order items — stock is decremented automatically by the
+        # OrderItem post_save signal via StockMovement.
         for item in cart_items:
             OrderItem.objects.create(
                 order=order,
                 product=item['product'],
                 quantity=item['quantity'],
                 unit_price=item['unit_price'],
-            )
-            Product.objects.filter(pk=item['product_id']).update(
-                stock_quantity=F('stock_quantity') - item['quantity']
             )
 
         order.compute_total()
